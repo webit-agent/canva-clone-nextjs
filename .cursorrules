@@ -1,0 +1,291 @@
+# Cursor Rules for Canva Clone - Canvas Editor
+
+## Project Overview
+This is a comprehensive Canva clone built with Next.js 14, featuring a full-featured canvas editor with real-time collaboration, admin template management, layers system, and professional design tools.
+
+## Tech Stack & Framework
+- **Framework**: Next.js 14 with App Router
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **Canvas Library**: Fabric.js 5.3.0-browser
+- **UI Components**: Radix UI primitives
+- **State Management**: Zustand
+- **Database**: PostgreSQL
+- **Authentication**: Custom auth with bcryptjs
+- **File Upload**: UploadThing
+- **API**: Hono.js for backend routes
+- **Real-time**: WebSocket (mock implementation ready for production)
+
+## Core Features to Implement
+
+### 1. Canvas Editor Core
+- **Canvas Management**: Use Fabric.js for all canvas operations
+- **Tools**: Select, shapes, text, images, draw, fill, stroke, font, opacity, filters
+- **Shapes**: Circle, rectangle, triangle, diamond, hexagon, pentagon, octagon, heart, star, shield, speech bubble, lightning, charts (bar, pie, line, donut), arrows, nature elements (sun, moon, cloud, flower, leaf)
+- **Text Tools**: Font family, size, weight, style, alignment, underline, line-through
+- **Drawing**: Free drawing mode with customizable brush settings
+- **Filters**: 20+ image filters (polaroid, sepia, vintage, blur, sharpen, etc.)
+- **Export**: PNG, JPG, SVG, JSON formats
+
+### 2. Layers System (Photoshop-like)
+- **Layer Types**: text, image, shape, group, background
+- **Layer Operations**: visibility toggle, lock/unlock, opacity control, rename
+- **Layer Management**: add, delete, duplicate, reorder with drag & drop
+- **Layer Thumbnails**: automatic generation with fallback icons
+- **Z-index Control**: bring to front, send to back
+
+### 3. Page Management System
+- **Multi-page Support**: Create, delete, navigate between pages
+- **Page Operations**: Lock/unlock pages, rename pages
+- **Use Cases**: Books, websites, multi-page designs, sequential workflows
+
+### 4. Real-time Collaboration
+- **Sharing System**: View, comment, edit permissions
+- **Access Levels**: Private, anyone with link, team members
+- **Guest Access**: No sign-in required for basic editing
+- **Live Features**: Real-time updates, cursor tracking, comment system
+- **Guest Restrictions**: Cannot upload files, add comments, change permissions
+
+### 5. Admin Template Management
+- **Admin Dashboard**: Role-based access control
+- **Template Upload**: File upload with thumbnail generation
+- **Template Separation**: Templates don't appear in user projects
+- **Admin Authentication**: Admin role in users table
+
+### 6. Authentication & User Management
+- **Custom Auth**: Email/password with bcryptjs
+- **User Roles**: Regular user, admin
+- **Profile Management**: Clean URL structure (/profile)
+- **Session Management**: Secure session handling
+
+### 7. Project Management
+- **CRUD Operations**: Create, read, update, delete projects
+- **Auto-save**: Automatic project saving
+- **Project Templates**: Use admin-uploaded templates
+- **Recent Projects**: Exclude templates from user project list
+
+## File Structure & Organization
+
+```
+src/
+├── app/                          # Next.js App Router
+│   ├── (auth)/                   # Authentication routes
+│   ├── (dashboard)/              # Dashboard routes
+│   ├── admin/                    # Admin panel
+│   ├── editor/[projectId]/       # Canvas editor
+│   └── shared/[id]/              # Shared project access
+├── components/                   # Reusable UI components
+│   ├── ui/                       # Radix UI components
+│   ├── auth/                     # Auth-related components
+│   └── admin/                    # Admin components
+├── features/                     # Feature-based modules
+│   ├── editor/                   # Canvas editor logic
+│   │   ├── components/           # Editor components
+│   │   ├── hooks/                # Editor hooks
+│   │   ├── types/                # Type definitions
+│   │   └── utils/                # Utility functions
+│   ├── collaboration/            # Real-time collaboration
+│   ├── auth/                     # Authentication logic
+│   ├── projects/                 # Project management
+│   ├── images/                   # Image handling
+│   ├── ai/                       # AI features
+│   └── subscriptions/            # Subscription management
+└── hooks/                        # Global hooks
+```
+
+## Implementation Guidelines
+
+### Canvas Editor Implementation
+```typescript
+// Use Fabric.js for all canvas operations
+import { fabric } from "fabric";
+
+// Editor interface structure
+interface Editor {
+  // Canvas operations
+  canvas: fabric.Canvas;
+  selectedObjects: fabric.Object[];
+  
+  // Shape creation
+  addCircle: () => void;
+  addRectangle: () => void;
+  addText: (value: string, options?: ITextboxOptions) => void;
+  
+  // Styling
+  changeFillColor: (value: string) => void;
+  changeStrokeColor: (value: string) => void;
+  changeOpacity: (value: number) => void;
+  
+  // Export functions
+  savePng: () => void;
+  saveJpg: () => void;
+  saveSvg: () => void;
+  saveJson: () => void;
+}
+```
+
+### Active Tools System
+```typescript
+type ActiveTool = 
+  | "select" | "shapes" | "text" | "images" | "draw"
+  | "fill" | "stroke-color" | "stroke-width" | "font"
+  | "opacity" | "filter" | "settings" | "ai"
+  | "remove-bg" | "comments" | "templates" | "export"
+  | "pages" | "layers" | "border-radius" | "shadow"
+  | "gradient" | "background";
+```
+
+### Layers System Implementation
+```typescript
+interface Layer {
+  id: string;
+  name: string;
+  type: 'text' | 'image' | 'shape' | 'group' | 'background';
+  visible: boolean;
+  locked: boolean;
+  opacity: number;
+  thumbnail?: string;
+  fabricObject?: fabric.Object;
+}
+```
+
+### Collaboration Features
+```typescript
+interface CollaborationState {
+  isShared: boolean;
+  permission: 'view' | 'comment' | 'edit';
+  accessLevel: 'private' | 'anyone_with_link' | 'team';
+  collaborators: Collaborator[];
+  comments: Comment[];
+  isGuest: boolean;
+  guestName?: string;
+}
+```
+
+## UI/UX Design Patterns
+
+### Sidebar Navigation
+- Left sidebar with tool icons
+- Active tool highlighting
+- Collapsible sections for different tool categories
+- Context-sensitive tool options
+
+### Canvas Area
+- Centered canvas with zoom controls
+- Ruler guides and grid options
+- Selection handles and controls
+- Real-time cursor tracking for collaborators
+
+### Properties Panel
+- Right sidebar for selected object properties
+- Tabbed interface for different property types
+- Live preview of changes
+- Undo/redo functionality
+
+### Layers Panel
+- Photoshop-like layers interface
+- Drag and drop reordering
+- Layer thumbnails and visibility toggles
+- Context menu for layer operations
+
+## Color Scheme & Styling
+- Use Material Design color palette
+- Dark/light theme support with next-themes
+- Consistent spacing with Tailwind CSS
+- Radix UI components for accessibility
+
+## API & Data Management
+
+### Database Schema
+```sql
+-- Users table with role-based access
+users (id, email, password_hash, role, created_at, updated_at)
+
+-- Projects table (includes templates)
+projects (id, user_id, name, json, width, height, is_template, thumbnail_url, created_at, updated_at)
+
+-- Collaboration table
+project_collaborators (project_id, user_id, permission, created_at)
+```
+
+### API Routes Structure
+```
+/api/
+├── auth/                 # Authentication endpoints
+├── projects/             # Project CRUD operations
+├── admin/                # Admin-only endpoints
+├── collaboration/        # Sharing and collaboration
+├── images/               # Image upload and processing
+└── ai/                   # AI-powered features
+```
+
+## Key Dependencies & Versions
+```json
+{
+  "fabric": "5.3.0-browser",
+  "next": "14.2.4",
+  "react": "^18",
+  "typescript": "^5",
+  "@radix-ui/react-*": "latest",
+  "tailwindcss": "^3.4.1",
+  "zustand": "^4.5.4",
+  "unsplash-js": "^7.0.19",
+  "uuid": "^13.0.0",
+  "date-fns": "^3.6.0"
+}
+```
+
+## Performance Optimization
+- Use React.memo for expensive components
+- Implement virtualization for large layer lists
+- Debounce canvas operations and auto-save
+- Optimize Fabric.js object rendering
+- Lazy load images and templates
+
+## Security Considerations
+- Validate all user inputs
+- Sanitize uploaded files
+- Implement proper CORS policies
+- Use secure session management
+- Rate limit API endpoints
+
+## Testing Strategy
+- Unit tests for utility functions
+- Integration tests for API endpoints
+- E2E tests for critical user flows
+- Canvas operation testing with Fabric.js
+
+## Deployment & Environment
+- Use environment variables for sensitive data
+- Configure proper database connections
+- Set up file upload storage (UploadThing)
+- Configure WebSocket for real-time features
+
+## Code Style & Best Practices
+- Use TypeScript strict mode
+- Follow Next.js App Router conventions
+- Implement proper error boundaries
+- Use consistent naming conventions
+- Document complex canvas operations
+- Implement proper loading states
+- Use proper TypeScript interfaces for all data structures
+
+## Feature Implementation Priority
+1. Core canvas editor with basic tools
+2. Layers system implementation
+3. Authentication and user management
+4. Project CRUD operations
+5. Real-time collaboration features
+6. Admin template management
+7. Advanced editing features (filters, effects)
+8. Export functionality
+9. AI-powered features
+10. Performance optimizations
+
+## External API Integration
+- **Unsplash API**: For stock photos (prefer dynamic fetching over static fallbacks)
+- **Replicate API**: For AI-powered features
+- **Stripe API**: For subscription management
+- **UploadThing**: For file uploads
+
+Remember to maintain the existing design aesthetic and user experience patterns established in the current codebase. Always prioritize user experience and performance when implementing new features.
