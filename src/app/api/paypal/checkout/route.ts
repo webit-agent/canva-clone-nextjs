@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getCurrentSession } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
+    // Get current user session
+    const session = await getCurrentSession();
+    if (!session) {
+      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/sign-in`);
+    }
+
     const { searchParams } = new URL(request.url);
     const amount = searchParams.get('amount');
     const currency = searchParams.get('currency') || 'USD';
@@ -42,7 +49,7 @@ export async function GET(request: NextRequest) {
 
     const tokenData = await tokenResponse.json();
 
-    // Create PayPal order
+    // Create PayPal order with user metadata
     const orderData = {
       intent: 'CAPTURE',
       purchase_units: [
@@ -52,10 +59,11 @@ export async function GET(request: NextRequest) {
             value: amount,
           },
           description: `${planName} Plan - ${planPeriod}`,
+          custom_id: session.user.id, // Store user ID for later processing
         },
       ],
       application_context: {
-        return_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscription?success=true`,
+        return_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/paypal/success?userId=${session.user.id}&amount=${amount}&planName=${planName}&planPeriod=${planPeriod}`,
         cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscription?canceled=true`,
       },
     };

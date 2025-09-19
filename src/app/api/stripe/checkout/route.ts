@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { getCurrentSession } from '@/lib/auth';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2024-06-20',
@@ -7,6 +8,15 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function GET(request: NextRequest) {
   try {
+    // Check authentication
+    const userSession = await getCurrentSession();
+    if (!userSession?.user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const amount = searchParams.get('amount');
     const currency = searchParams.get('currency') || 'usd';
@@ -21,7 +31,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const session = await stripe.checkout.sessions.create({
+    console.log("🛒 Creating Stripe checkout for user:", userSession.user.id, "plan:", planName);
+
+    const checkoutSession = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
         {
@@ -40,16 +52,18 @@ export async function GET(request: NextRequest) {
         },
       ],
       mode: planPeriod === 'month' ? 'subscription' : 'payment',
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscription?success=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscription?canceled=true`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscription?success=1&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscription?canceled=1`,
       metadata: {
+        userId: userSession.user.id,
         planName,
         planPeriod,
         mode,
       },
     });
 
-    return NextResponse.redirect(session.url!);
+    console.log("✅ Stripe checkout session created:", checkoutSession.id);
+    return NextResponse.redirect(checkoutSession.url!);
   } catch (error) {
     console.error('Stripe checkout error:', error);
     return NextResponse.json(

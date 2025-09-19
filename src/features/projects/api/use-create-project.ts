@@ -20,6 +20,10 @@ export const useCreateProject = () => {
       const response = await client.api.projects.$post({ json });
 
       if (!response.ok) {
+        const errorData = await response.json() as any;
+        if (response.status === 403 && errorData.error === "Project limit reached") {
+          throw new Error(errorData.message || "Project limit reached. Upgrade to Pro for unlimited projects.");
+        }
         throw new Error("Something went wrong");
       }
 
@@ -30,10 +34,14 @@ export const useCreateProject = () => {
 
       queryClient.invalidateQueries({ queryKey: ["projects"] });
     },
-    onError: () => {
-      toast.error(
-        "Failed to create project. The session token may have expired, logout and login again, and everything will work fine."
-      );
+    onError: (error) => {
+      if (error.message.includes("Project limit reached") || error.message.includes("Upgrade to Pro")) {
+        toast.error(error.message);
+      } else {
+        toast.error(
+          "Failed to create project. The session token may have expired, logout and login again, and everything will work fine."
+        );
+      }
     },
   });
 

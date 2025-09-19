@@ -179,6 +179,50 @@ const app = new Hono<{ Variables: Variables }>()
 
       try {
         const client = await pool.connect();
+        
+        // Check user's subscription status
+        const subscriptionResult = await client.query(
+          `SELECT * FROM subscriptions WHERE user_id = $1 LIMIT 1`,
+          [user.id]
+        );
+        
+        const subscription = subscriptionResult.rows[0] || null;
+        let isProUser = false;
+        
+        if (subscription && subscription.stripe_current_period_end) {
+          subscription.stripe_current_period_end = new Date(subscription.stripe_current_period_end);
+          const DAY_IN_MS = 86_400_000;
+          const periodEndTime = subscription.stripe_current_period_end.getTime();
+          const currentTime = Date.now();
+          const gracePeriod = DAY_IN_MS;
+          
+          isProUser = subscription.status === 'active' && 
+                     subscription.stripe_price_id && 
+                     periodEndTime + gracePeriod > currentTime;
+        }
+        
+        // If user is not pro, check project limit before restoring
+        if (!isProUser) {
+          const projectCountResult = await client.query(
+            `SELECT COUNT(*) as count FROM projects 
+             WHERE user_id = $1 AND deleted_at IS NULL AND (is_template IS NULL OR is_template = false)`,
+            [user.id]
+          );
+          
+          const projectCount = parseInt(projectCountResult.rows[0].count);
+          const FREE_PROJECT_LIMIT = 5;
+          
+          if (projectCount >= FREE_PROJECT_LIMIT) {
+            client.release();
+            return c.json({ 
+              error: "Project limit reached", 
+              message: `Free users can have up to ${FREE_PROJECT_LIMIT} active projects. Delete some projects or upgrade to Pro for unlimited projects.`,
+              limit: FREE_PROJECT_LIMIT,
+              current: projectCount
+            }, 403);
+          }
+        }
+        
         const result = await client.query(
           `UPDATE projects 
            SET deleted_at = NULL, updated_at = CURRENT_TIMESTAMP 
@@ -367,6 +411,49 @@ const app = new Hono<{ Variables: Variables }>()
         }
 
         const project = projectResult.rows[0];
+
+        // Check user's subscription status
+        const subscriptionResult = await client.query(
+          `SELECT * FROM subscriptions WHERE user_id = $1 LIMIT 1`,
+          [user.id]
+        );
+        
+        const subscription = subscriptionResult.rows[0] || null;
+        let isProUser = false;
+        
+        if (subscription && subscription.stripe_current_period_end) {
+          subscription.stripe_current_period_end = new Date(subscription.stripe_current_period_end);
+          const DAY_IN_MS = 86_400_000;
+          const periodEndTime = subscription.stripe_current_period_end.getTime();
+          const currentTime = Date.now();
+          const gracePeriod = DAY_IN_MS;
+          
+          isProUser = subscription.status === 'active' && 
+                     subscription.stripe_price_id && 
+                     periodEndTime + gracePeriod > currentTime;
+        }
+        
+        // If user is not pro, check project limit
+        if (!isProUser) {
+          const projectCountResult = await client.query(
+            `SELECT COUNT(*) as count FROM projects 
+             WHERE user_id = $1 AND deleted_at IS NULL AND (is_template IS NULL OR is_template = false)`,
+            [user.id]
+          );
+          
+          const projectCount = parseInt(projectCountResult.rows[0].count);
+          const FREE_PROJECT_LIMIT = 5;
+          
+          if (projectCount >= FREE_PROJECT_LIMIT) {
+            client.release();
+            return c.json({ 
+              error: "Project limit reached", 
+              message: `Free users can create up to ${FREE_PROJECT_LIMIT} projects. Upgrade to Pro for unlimited projects.`,
+              limit: FREE_PROJECT_LIMIT,
+              current: projectCount
+            }, 403);
+          }
+        }
 
         // Create duplicate
         const duplicateResult = await client.query(
@@ -561,6 +648,50 @@ const app = new Hono<{ Variables: Variables }>()
 
       try {
         const client = await pool.connect();
+        
+        // Check user's subscription status
+        const subscriptionResult = await client.query(
+          `SELECT * FROM subscriptions WHERE user_id = $1 LIMIT 1`,
+          [user.id]
+        );
+        
+        const subscription = subscriptionResult.rows[0] || null;
+        let isProUser = false;
+        
+        if (subscription && subscription.stripe_current_period_end) {
+          subscription.stripe_current_period_end = new Date(subscription.stripe_current_period_end);
+          const DAY_IN_MS = 86_400_000;
+          const periodEndTime = subscription.stripe_current_period_end.getTime();
+          const currentTime = Date.now();
+          const gracePeriod = DAY_IN_MS;
+          
+          isProUser = subscription.status === 'active' && 
+                     subscription.stripe_price_id && 
+                     periodEndTime + gracePeriod > currentTime;
+        }
+        
+        // If user is not pro, check project limit
+        if (!isProUser) {
+          const projectCountResult = await client.query(
+            `SELECT COUNT(*) as count FROM projects 
+             WHERE user_id = $1 AND deleted_at IS NULL AND (is_template IS NULL OR is_template = false)`,
+            [user.id]
+          );
+          
+          const projectCount = parseInt(projectCountResult.rows[0].count);
+          const FREE_PROJECT_LIMIT = 5;
+          
+          if (projectCount >= FREE_PROJECT_LIMIT) {
+            client.release();
+            return c.json({ 
+              error: "Project limit reached", 
+              message: `Free users can create up to ${FREE_PROJECT_LIMIT} projects. Upgrade to Pro for unlimited projects.`,
+              limit: FREE_PROJECT_LIMIT,
+              current: projectCount
+            }, 403);
+          }
+        }
+        
         const result = await client.query(
           `INSERT INTO projects (name, json, width, height, user_id, created_at, updated_at) 
            VALUES ($1, $2, $3, $4, $5, $6, $7) 

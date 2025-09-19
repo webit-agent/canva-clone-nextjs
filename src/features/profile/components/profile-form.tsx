@@ -30,7 +30,6 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
   const [formData, setFormData] = useState({
     name: user.name || "",
     email: user.email || "",
-    bio: "",
   });
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,25 +48,28 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('name', formData.name);
-      formDataToSend.append('email', formData.email);
-      formDataToSend.append('bio', formData.bio);
-      if (imageFile) {
-        formDataToSend.append('image', imageFile);
-      }
-
-      const response = await fetch('/api/profile', {
-        method: 'PUT',
-        body: formDataToSend,
+      const response = await fetch('/api/auth/update-profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+        }),
       });
 
-      if (response.ok) {
+      const data = await response.json();
+
+      if (data.success) {
         toast.success("Profile updated successfully!");
+        // Optionally refresh the page or update local state
+        window.location.reload();
       } else {
-        throw new Error('Failed to update profile');
+        toast.error(data.error || "Failed to update profile");
       }
     } catch (error) {
+      console.error('Profile update error:', error);
       toast.error("Failed to update profile");
     } finally {
       setIsLoading(false);
@@ -135,17 +137,6 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
             />
           </div>
 
-          {/* Bio */}
-          <div className="space-y-2">
-            <Label htmlFor="bio">Bio</Label>
-            <Textarea
-              id="bio"
-              value={formData.bio}
-              onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
-              placeholder="Tell us about yourself..."
-              rows={3}
-            />
-          </div>
 
           {/* Submit Button */}
           <Button type="submit" disabled={isLoading} className="w-full">

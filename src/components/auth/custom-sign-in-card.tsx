@@ -35,8 +35,8 @@ export const CustomSignInCard = () => {
       const data = await response.json();
 
       if (data.success) {
-        router.push('/dashboard');
-        router.refresh();
+        // Force complete page reload
+        window.location.replace('/dashboard');
       } else {
         setError(data.error || 'Login failed');
       }

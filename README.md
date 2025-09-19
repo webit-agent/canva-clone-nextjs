@@ -130,8 +130,9 @@ psql -d canva-clone -f database-setup.sql
 # external database :
 psql "postgresql://postgres:password@ip-address:5432/canva-clone" \
   --set ON_ERROR_STOP=1 \
-  -f /database-setup.sql
+  -f /path/database-setup.sql
 ```
+# administrator access (email: admin@admin.com password: admin123)
 
 ### 3. Environment Configuration
 ```bash

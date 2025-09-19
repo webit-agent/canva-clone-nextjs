@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Loader2, TriangleAlert } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
-import { useSignUp } from "@/features/auth/hooks/use-sign-up";
+import { useAuth } from "@/hooks/use-auth";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,31 +15,27 @@ import { Card, CardTitle, CardHeader, CardContent, CardDescription } from "@/com
 
 export const SignUpCard = () => {
   const [loading, setLoading] = useState(false);
-
-  const mutation = useSignUp();
+  const [error, setError] = useState<string | null>(null);
+  const { register } = useAuth();
+  const router = useRouter();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-
-  const onCredentialSignUp = (e: React.FormEvent<HTMLFormElement>) => {
+  const onCredentialSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
-    mutation.mutate(
-      {
-        name,
-        email,
-        password,
-      },
-      {
-        onSuccess: () => {
-          // TODO: Implement custom credential signup success handling
-          console.log("Custom credential signup success");
-        },
-      }
-    );
+    try {
+      await register(email, password, name);
+      // Force immediate hard reload without toast to prevent interference
+      window.location.replace('/');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Registration failed");
+      setLoading(false);
+    }
   };
 
   return (
@@ -46,16 +44,16 @@ export const SignUpCard = () => {
         <CardTitle>Create an account</CardTitle>
         <CardDescription>Use your email or another service to continue</CardDescription>
       </CardHeader>
-      {!!mutation.error && (
+      {!!error && (
         <div className="bg-destructive/15 p-3 rounded-md flex items-center gap-x-2 text-sm text-destructive mb-6">
           <TriangleAlert className="size-4" />
-          <p>Something went wrong</p>
+          <p>{error}</p>
         </div>
       )}
       <CardContent className="space-y-5 px-0 pb-0">
         <form onSubmit={onCredentialSignUp} className="space-y-2.5">
           <Input
-            disabled={mutation.isPending || loading}
+            disabled={loading}
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Full name"
@@ -63,7 +61,7 @@ export const SignUpCard = () => {
             required
           />
           <Input
-            disabled={mutation.isPending || loading}
+            disabled={loading}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
@@ -71,7 +69,7 @@ export const SignUpCard = () => {
             required
           />
           <Input
-            disabled={mutation.isPending || loading}
+            disabled={loading}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
@@ -84,9 +82,9 @@ export const SignUpCard = () => {
             className="w-full"
             type="submit"
             size="lg"
-            disabled={loading || mutation.isPending}
+            disabled={loading}
           >
-            {mutation.isPending ? (
+            {loading ? (
               <Loader2 className="mr-2 size-5 top-2.5 left-2.5 animate-spin" />
             ) : (
               "Continue"

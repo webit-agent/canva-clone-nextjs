@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useDeletedProjects, useRestoreProject, usePermanentDeleteProject } from "@/features/projects/api/use-deleted-projects";
+import { toast } from "sonner";
 
 export const TrashManager = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -50,10 +51,17 @@ export const TrashManager = () => {
     try {
       setIsLoading(true);
       await restoreProject.mutateAsync(selectedProject.id);
+      toast.success("Project restored successfully");
       setIsLoading(false);
       setRestoreDialogOpen(false);
       setSelectedProject(null);
-    } catch (error) {
+    } catch (error: any) {
+      setIsLoading(false);
+      if (error.message.includes("Project limit reached") || error.message.includes("Delete some projects")) {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to restore project");
+      }
       console.error("Failed to restore project:", error);
     }
   };

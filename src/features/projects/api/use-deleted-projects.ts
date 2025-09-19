@@ -34,6 +34,10 @@ export const useRestoreProject = () => {
       });
       
       if (!response.ok) {
+        const errorData = await response.json() as any;
+        if (response.status === 403 && errorData.error === "Project limit reached") {
+          throw new Error(errorData.message || "Project limit reached. Delete some projects or upgrade to Pro for unlimited projects.");
+        }
         throw new Error("Failed to restore project");
       }
       

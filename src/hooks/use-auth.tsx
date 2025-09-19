@@ -60,6 +60,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     if (data.success) {
       setUser(data.user);
+      // Force complete window reload
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     } else {
       throw new Error(data.error || 'Login failed');
     }
@@ -76,6 +80,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     if (data.success) {
       setUser(data.user);
+      // Don't reload here - let component handle it
     } else {
       throw new Error(data.error || 'Registration failed');
     }
@@ -84,6 +89,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
     setUser(null);
+    // Force page reload to ensure all components refresh properly
+    window.location.reload();
   };
 
   useEffect(() => {

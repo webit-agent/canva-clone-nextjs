@@ -120,22 +120,13 @@ CREATE INDEX IF NOT EXISTS idx_images_user_id ON images(user_id);
 -- Note: In production, use a secure password and hash it properly
 INSERT INTO users (email, password, name, role, email_verified) 
 VALUES (
-  'admin@canva-clone.com', 
-  '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', -- bcrypt hash for 'admin123'
+  'admin@admin.com',
+  '$2a$12$6slsBz49dx2SgV97r7tM5uje9vXzbgMT1I2ZJz9f7ZmmhJI2gjHN2', -- bcrypt hash for 'admin123'
   'Admin User', 
   'admin', 
   true
 ) ON CONFLICT (email) DO UPDATE SET role = 'admin';
 
--- Create a sample regular user (password: user123)
-INSERT INTO users (email, password, name, role, email_verified) 
-VALUES (
-  'user@canva-clone.com', 
-  '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', -- bcrypt hash for 'user123'
-  'Sample User', 
-  'user', 
-  true
-) ON CONFLICT (email) DO NOTHING;
 
 -- =====================================================
 -- CLEANUP

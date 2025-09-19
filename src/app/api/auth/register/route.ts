@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { registerUser } from '@/lib/auth';
+import { pool } from '@/lib/database';
 
 const RegisterSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -18,6 +19,26 @@ export async function POST(request: NextRequest) {
       validatedData.password,
       validatedData.name
     );
+    
+    // Create free plan subscription for new user
+    try {
+      const client = await pool.connect();
+      await client.query(
+        `INSERT INTO subscriptions (user_id, status, created_at, updated_at) 
+         VALUES ($1, $2, $3, $4)`,
+        [
+          user.id,
+          'free',
+          new Date(),
+          new Date()
+        ]
+      );
+      client.release();
+      console.log("✅ Free plan subscription created for new user:", user.id);
+    } catch (dbError) {
+      console.error("❌ Failed to create free subscription:", dbError);
+      // Don't fail registration if subscription creation fails
+    }
     
     return NextResponse.json({
       success: true,

@@ -19,17 +19,23 @@ export const checkIsActive = (
 ) => {
   let active = false;
 
-  if (
-    subscription &&
-    subscription.stripe_price_id &&
-    subscription.stripe_current_period_end &&
-    subscription.status === 'active'
-  ) {
-    const periodEndTime = subscription.stripe_current_period_end.getTime();
-    const currentTime = Date.now();
-    const gracePeriod = DAY_IN_MS;
-    
-    active = periodEndTime + gracePeriod > currentTime;
+  if (subscription) {
+    // Free plan is always active
+    if (subscription.status === 'free') {
+      active = false; // Free plan users should see upgrade prompts
+    }
+    // Pro plan requires valid subscription data
+    else if (
+      subscription.stripe_price_id &&
+      subscription.stripe_current_period_end &&
+      subscription.status === 'active'
+    ) {
+      const periodEndTime = subscription.stripe_current_period_end.getTime();
+      const currentTime = Date.now();
+      const gracePeriod = DAY_IN_MS;
+      
+      active = periodEndTime + gracePeriod > currentTime;
+    }
   }
 
   return active;

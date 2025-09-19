@@ -114,6 +114,7 @@ export const TemplatesSection = () => {
         defaultName={selectedTemplate ? `${selectedTemplate.name} Project` : "Untitled Project"}
         title="Name Your Project"
         description="Choose a name for your new project based on this template"
+        isLoading={mutation.isPending}
       />
     </div>
   );

@@ -1,26 +1,45 @@
 "use client";
 
-import { Calendar, Download, Receipt } from "lucide-react";
+import { Calendar, Download, Receipt, Loader } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useBillingHistory } from "@/features/subscriptions/api/use-billing-history";
 
 interface BillingRecord {
   id: string;
   date: string;
-  amount: number;
+  amount: string;
   status: "paid" | "pending" | "failed";
   description: string;
   invoiceUrl?: string;
 }
 
 export const BillingHistory = () => {
-  const billingHistory: BillingRecord[] = [];
+  const { data: billingHistory = [], isLoading, error } = useBillingHistory();
 
   const handleDownloadInvoice = (invoiceUrl: string) => {
-    // Handle invoice download
-    console.log("Downloading invoice:", invoiceUrl);
+    window.open(invoiceUrl, '_blank');
   };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Receipt className="size-5" />
+            Billing History
+          </CardTitle>
+          <CardDescription>
+            View and download your past invoices
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-8">
+          <Loader className="size-6 animate-spin" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
